@@ -58,3 +58,6 @@ ON tbl_pedido_itens (numero_pedido);
 CREATE INDEX idx_item_produto
 ON tbl_pedido_itens (codigo_produto);
 
+-- Caso precise da liberação no banco
+ALTER USER 'seu_usuario'@'%' IDENTIFIED WITH mysql_native_password BY 'sua_senha';
+FLUSH PRIVILEGES;
