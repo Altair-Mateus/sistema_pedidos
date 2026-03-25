@@ -139,9 +139,14 @@
             <Form>Form1</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="src\infra\uIDBConnection.pas"/>
-        <DCCReference Include="src\infra\uMySQLConnection.pas"/>
-        <DCCReference Include="src\infra\uDBConfig.pas"/>
+        <DCCReference Include="src\model\uCliente.pas"/>
+        <DCCReference Include="src\infra\db\uSpQuery.pas"/>
+        <DCCReference Include="src\infra\db\uDBConfig.pas"/>
+        <DCCReference Include="src\infra\db\uIDBConnection.pas"/>
+        <DCCReference Include="src\infra\db\uMySQLConnection.pas"/>
+        <DCCReference Include="src\model\uProduto.pas"/>
+        <DCCReference Include="src\model\uPedido.pas"/>
+        <DCCReference Include="src\model\uItensPedido.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
