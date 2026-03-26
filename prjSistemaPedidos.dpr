@@ -2,7 +2,7 @@ program prjSistemaPedidos;
 
 uses
   Vcl.Forms,
-  fEmissaoPedido in 'src\view\fEmissaoPedido.pas' {Form1},
+  fEmissaoPedido in 'src\view\fEmissaoPedido.pas' {frmEmissaoPedido},
   System.SysUtils,
   Vcl.Dialogs,
   Winapi.Windows,
@@ -29,12 +29,12 @@ begin
   except
     on E: Exception do
     begin
-      ShowMessage('Erro ao conectar: ' + E.Message);
+      Application.MessageBox(PChar('Erro ao conectar: '#13 + E.Message), 'Erro!', MB_OK or MB_ICONERROR);
       ExitProcess(1);
     end;
   end;
 
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TfrmEmissaoPedido, frmEmissaoPedido);
   Application.Run;
 
 end.

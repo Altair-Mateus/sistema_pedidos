@@ -136,7 +136,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="src\view\fEmissaoPedido.pas">
-            <Form>Form1</Form>
+            <Form>frmEmissaoPedido</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="src\model\uCliente.pas"/>

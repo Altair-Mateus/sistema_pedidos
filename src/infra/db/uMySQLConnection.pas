@@ -36,7 +36,7 @@ begin
     on E: Exception do
     begin
       raise Exception.CreateFmt(
-        'Erro ao conectar com o banco de dados [%s]: %s',
+        'Falha ao conectar com o banco de dados [%s]: %s',
         [FConnection.Params.Values['Database'], E.Message]
         );
     end;
@@ -70,7 +70,7 @@ begin
     Values['Server'] := 'localhost';
     Database := 'sistema_pedidos';
     UserName := 'root';
-    Password := 'root';
+    Password := 'Study@2021!';
     Values['Port'] := '3306';
     Values['VendorLib'] := 'libmariadb.dll';
     Values['CharacterSet'] := 'utf8mb4';
