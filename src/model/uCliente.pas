@@ -3,7 +3,9 @@ unit uCliente;
 interface
 
 uses
-  Data.DB;
+  Data.DB,
+  FireDAC.Stan.Param,
+  FireDAC.DApt;
 
 type
   TCliente = class
@@ -48,6 +50,8 @@ begin
 
     lQuery.SQL.Text := 'SELECT * FROM tbl_clientes WHERE codigo = :COD';
     lQuery.ParamByName('COD').AsInteger := FCodigo;
+
+    lQuery.Open;
 
     if not(lQuery.IsEmpty) then
     begin

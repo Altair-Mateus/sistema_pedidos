@@ -3,7 +3,9 @@ unit uPedido;
 interface
 
 uses
-  Data.DB;
+  Data.DB,
+  FireDAC.Stan.Param,
+  FireDAC.DApt;
 
 type
   TPedido = class
@@ -84,6 +86,8 @@ begin
 
     lQuery.SQL.Text := TextoCarregaPorNrPed;
     lQuery.ParamByName('NR').AsInteger := FNumeroPedido;
+
+    lQuery.Open;
 
     if not(lQuery.IsEmpty) then
     begin

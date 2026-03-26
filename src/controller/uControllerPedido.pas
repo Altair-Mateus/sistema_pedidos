@@ -18,7 +18,7 @@ type
     function GravarItens(const pNrPedido: Integer): Boolean;
     function CarregaListaItens(const pNrPedido: Integer): Boolean;
   public
-    property Pedido: TPedido read FPedido write FPedido;
+    property Pedido: TPedido read FPedido;
     property OperacaoCadastro: TOperacaoCadastro read FOperacaoCadastro write FOperacaoCadastro;
     property ListaItens: TObjectList<TItensPedido> read FListaItens;
 
@@ -30,6 +30,9 @@ type
     function Excluir(const pNrPedido: Integer): Boolean;
     procedure Limpar;
 
+    procedure AdicionarDadosPedido(const pCodiCli: Integer; const pValorTotal: Double);
+    procedure AdicionarItem(const pCod: Integer; const pQtd, pValorUnit, pValorTotal: Currency);
+
   end;
 
 implementation
@@ -40,6 +43,48 @@ uses
   uDBConfig;
 
 { TControllerPedido }
+
+procedure TControllerPedido.AdicionarDadosPedido(const pCodiCli: Integer;
+  const pValorTotal: Double);
+begin
+  try
+
+    FPedido.DataEmissao := Now;
+    FPedido.CodigoCliente := pCodiCli;
+    FPedido.ValorTotal := pValorTotal;
+
+  except
+    on E: Exception do
+    begin
+      raise Exception.Create('Falha ao definir dados do pedido.');
+    end;
+  end;
+end;
+
+procedure TControllerPedido.AdicionarItem(const pCod: Integer; const pQtd,
+  pValorUnit, pValorTotal: Currency);
+var
+  lItem: TItensPedido;
+begin
+  lItem := TItensPedido.Create;
+  try
+
+    lItem.CodigoProduto := pCod;
+    lItem.Quantidade := pQtd;
+    lItem.ValorUnitario := pValorUnit;
+    lItem.ValorTotal := pValorTotal;
+
+    FListaItens.Add(lItem);
+
+  except
+    on E: Exception do
+    begin
+      lItem.Free;
+      raise Exception.Create('Falha ao inserir dados dos itens do pedido');
+    end;
+  end;
+
+end;
 
 function TControllerPedido.CarregaListaItens(const pNrPedido: Integer): Boolean;
 var

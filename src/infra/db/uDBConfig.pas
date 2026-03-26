@@ -10,6 +10,7 @@ type
   TDBConfig = class
   private
     class var FConnection: TFDConnection;
+    class var FDBConnection: IDBConnection;
   public
     class procedure Init(pConnection: IDBConnection);
     class function Connection: TFDConnection;
@@ -26,8 +27,9 @@ end;
 
 class procedure TDBConfig.Init(pConnection: IDBConnection);
 begin
-  pConnection.Connect;
-  FConnection := pConnection.GetConnection;
+  FDBConnection := pConnection;
+  FDBConnection.Connect;
+  FConnection := FDBConnection.GetConnection;
 end;
 
 end.

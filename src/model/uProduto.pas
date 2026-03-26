@@ -3,7 +3,9 @@ unit uProduto;
 interface
 
 uses
-  Data.DB;
+  Data.DB,
+  FireDAC.Stan.Param,
+  FireDAC.DApt;
 
 type
   TProduto = class
@@ -47,6 +49,8 @@ begin
 
     lQuery.SQL.Text := TextoCarregaPorCodigo;
     lQuery.ParamByName('COD').AsInteger := FCodigo;
+
+    lQuery.Open;
 
     if not(lQuery.IsEmpty) then
     begin

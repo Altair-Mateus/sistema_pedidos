@@ -4,7 +4,9 @@ interface
 
 uses
   Data.DB,
-  System.Generics.Collections;
+  System.Generics.Collections,
+  FireDAC.Stan.Param,
+  FireDAC.DApt;
 
 type
   TItensPedido = class
@@ -138,6 +140,8 @@ begin
 
     lQuery.SQL.Text := TextoCarregaPorCodigo;
     lQuery.ParamByName('COD').AsInteger := FCodigo;
+
+    lQuery.Open;
 
     if not(lQuery.IsEmpty) then
     begin
