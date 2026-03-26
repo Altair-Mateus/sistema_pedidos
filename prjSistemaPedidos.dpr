@@ -13,7 +13,9 @@ uses
   uMySQLConnection in 'src\infra\db\uMySQLConnection.pas',
   uProduto in 'src\model\uProduto.pas',
   uPedido in 'src\model\uPedido.pas',
-  uItensPedido in 'src\model\uItensPedido.pas';
+  uItensPedido in 'src\model\uItensPedido.pas',
+  uControllerPedido in 'src\controller\uControllerPedido.pas',
+  uEnums in 'src\common\types\uEnums.pas';
 
 {$R *.res}
 

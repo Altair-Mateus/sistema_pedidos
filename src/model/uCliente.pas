@@ -14,6 +14,8 @@ type
     FUf: string;
 
     procedure PopularCampos(pFieldList: TFieldList);
+
+    function TextoCarregaPorCodigo: String;
   public
     property Codigo: Integer read FCodigo write FCodigo;
     property Nome: string read FNome write FNome;
@@ -24,8 +26,6 @@ type
 
     procedure Limpar;
     function CarregaPorCodigo: Boolean;
-
-    class function CheckPorCodigo(const pCodigo: Integer): Boolean;
 
   end;
 
@@ -46,7 +46,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add('SELECT * FROM tbl_clientes WHERE codigo = :COD');
+    lQuery.SQL.Text := 'SELECT * FROM tbl_clientes WHERE codigo = :COD';
     lQuery.ParamByName('COD').AsInteger := FCodigo;
 
     if not(lQuery.IsEmpty) then
@@ -58,27 +58,6 @@ begin
   finally
     lQuery.Free;
   end;
-end;
-
-class function TCliente.CheckPorCodigo(const pCodigo: Integer): Boolean;
-var
-  lQuery: TSpQuery;
-begin
-
-  Result := False;
-
-  lQuery := TSpQuery.Create(nil);
-  try
-
-    lQuery.SQL.Add('SELECT codigo FROM tbl_clientes WHERE codigo = :COD');
-    lQuery.ParamByName('COD').AsInteger := pCodigo;
-
-    Result := (not lQuery.IsEmpty);
-
-  finally
-    lQuery.Free;
-  end;
-
 end;
 
 constructor TCliente.Create;
@@ -100,6 +79,11 @@ begin
   FNome := pFieldList.FieldByName('nome').AsString;
   FCidade := pFieldList.FieldByName('cidade').AsString;
   FUf := pFieldList.FieldByName('uf').AsString;
+end;
+
+function TCliente.TextoCarregaPorCodigo: String;
+begin
+
 end;
 
 end.

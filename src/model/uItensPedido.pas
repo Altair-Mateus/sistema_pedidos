@@ -3,7 +3,8 @@ unit uItensPedido;
 interface
 
 uses
-  Data.DB;
+  Data.DB,
+  System.Generics.Collections;
 
 type
   TItensPedido = class
@@ -16,6 +17,14 @@ type
     FValorTotal: Currency;
 
     procedure PopularCampos(pFieldList: TFieldList);
+
+    function TextoInserir: String;
+    function TextoExcluir: String;
+    function TextoExcluirPorNrPed: String;
+    function TextoAlterar: String;
+    function TextoCarregaPorCodigo: String;
+    function TextoCarregaPorNrPed: String;
+
   public
     property Codigo: Integer read FCodigo write FCodigo;
     property NumeroPedido: Integer read FNumeroPedido write FNumeroPedido;
@@ -32,6 +41,10 @@ type
     function Alterar: Boolean;
     function Excluir: Boolean;
 
+    function InserirEmLote(const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+    function AlimentaListaPorNrPed(const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+    function ExcluirTudoPorNrPed(const pNrPedido: Integer): Boolean;
+
   end;
 
 implementation
@@ -39,7 +52,52 @@ implementation
 { TItensPedido }
 
 uses
-  uSpQuery;
+  uSpQuery,
+  System.SysUtils;
+
+function TItensPedido.AlimentaListaPorNrPed(
+  const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+var
+  lQuery: TSpQuery;
+  lItem: TItensPedido;
+begin
+  Result := False;
+
+  if ((not Assigned(pLista)) or (pNrPedido <= 0)) then
+    Exit;
+
+  lQuery := TSpQuery.Create(nil);
+  try
+
+    lQuery.SQL.Text := TextoCarregaPorNrPed;
+    lQuery.ParamByName('NR_PED').AsInteger := pNrPedido;
+
+    lQuery.Open;
+
+    while not(lQuery.Eof) do
+    begin
+
+      lItem := TItensPedido.Create;
+      try
+        lItem.PopularCampos(lQuery.FieldList);
+        pLista.Add(lItem);
+      except
+        on E: Exception do
+        begin
+          lItem.Free;
+          raise;
+        end;
+      end;
+
+      lQuery.Next;
+    end;
+
+    Result := True;
+
+  finally
+    lQuery.Free;
+  end;
+end;
 
 function TItensPedido.Alterar: Boolean;
 var
@@ -49,13 +107,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' UPDATE tbl_pedido_itens SET ');
-    lQuery.SQL.Add(' numero_pedido = :NR_PED,    ');
-    lQuery.SQL.Add(' codigo_produto = :COD_PROD, ');
-    lQuery.SQL.Add(' quantidade = :QTD,          ');
-    lQuery.SQL.Add(' valor_unitario = :V_UNIT,   ');
-    lQuery.SQL.Add(' valor_total = :V_TOTAL      ');
-    lQuery.SQL.Add(' WHERE codigo = :COD         ');
+    lQuery.SQL.Text := TextoAlterar;
 
     lQuery.ParamByName('NR_PED').AsInteger := FNumeroPedido;
     lQuery.ParamByName('COD_PROD').AsInteger := FCodigoProduto;
@@ -84,7 +136,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add('SELECT * FROM tbl_pedido_itens WHERE codigo = :COD');
+    lQuery.SQL.Text := TextoCarregaPorCodigo;
     lQuery.ParamByName('COD').AsInteger := FCodigo;
 
     if not(lQuery.IsEmpty) then
@@ -114,8 +166,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' DELETE FROM tbl_pedido_itens ');
-    lQuery.SQL.Add(' WHERE codigo = :COD ');
+    lQuery.SQL.Text := TextoExcluir;
     lQuery.ParamByName('COD').AsInteger := FCodigo;
 
     lQuery.ExecSQL;
@@ -128,6 +179,27 @@ begin
 
 end;
 
+function TItensPedido.ExcluirTudoPorNrPed(const pNrPedido: Integer): Boolean;
+var
+  lQuery: TSpQuery;
+begin
+  Result := False;
+
+  lQuery := TSpQuery.Create(nil);
+  try
+
+    lQuery.SQL.Text := TextoExcluirPorNrPed;
+    lQuery.ParamByName('NR_PED').AsInteger := pNrPedido;
+
+    lQuery.ExecSQL;
+
+    Result := True;
+
+  finally
+    lQuery.Free;
+  end;
+end;
+
 function TItensPedido.Inserir: Boolean;
 var
   lQuery: TSpQuery;
@@ -136,9 +208,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' INSERT INTO tbl_pedido_itens ');
-    lQuery.SQL.Add(' (numero_pedido, codigo_produto, quantidade, valor_unitario, valor_total) ');
-    lQuery.SQL.Add(' VALUES (:NR_PED, :COD_PROD, :QTD, :V_UNIT, :V_TOTAL)');
+    lQuery.SQL.Text := TextoInserir;
 
     lQuery.ParamByName('NR_PED').AsInteger := FNumeroPedido;
     lQuery.ParamByName('COD_PROD').AsInteger := FCodigoProduto;
@@ -147,6 +217,51 @@ begin
     lQuery.ParamByName('V_TOTAL').AsCurrency := FValorTotal;
 
     lQuery.ExecSQL;
+
+    Result := True;
+
+  finally
+    lQuery.Free;
+  end;
+end;
+
+function TItensPedido.InserirEmLote(
+  const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+var
+  lQuery: TSpQuery;
+  I: Integer;
+  lTamanhoLista: Integer;
+begin
+
+  Result := False;
+  lTamanhoLista := 0;
+
+  if not(Assigned(pLista)) then
+    Exit;
+
+  lTamanhoLista := pLista.Count;
+  if not(lTamanhoLista > 0) then
+    Exit;
+
+  lQuery := TSpQuery.Create(nil);
+  try
+
+    lQuery.SQL.Text := TextoInserir;
+
+    lQuery.Params.ArraySize := lTamanhoLista;
+
+    for I := 0 to Pred(lTamanhoLista) do
+    begin
+
+      lQuery.ParamByName('NR_PED').AsIntegers[I] := pNrPedido;
+      lQuery.ParamByName('COD_PROD').AsIntegers[I] := pLista[I].FCodigoProduto;
+      lQuery.ParamByName('QTD').AsCurrencys[I] := pLista[I].FQuantidade;
+      lQuery.ParamByName('V_UNIT').AsCurrencys[I] := pLista[I].FValorUnitario;
+      lQuery.ParamByName('V_TOTAL').AsCurrencys[I] := pLista[I].FValorTotal;
+
+    end;
+
+    lQuery.Execute(lQuery.Params.ArraySize);
 
     Result := True;
 
@@ -173,6 +288,44 @@ begin
   FQuantidade := pFieldList.FieldByName('quantidade').AsCurrency;
   FValorUnitario := pFieldList.FieldByName('valor_unitario').AsCurrency;
   FValorTotal := pFieldList.FieldByName('valor_total').AsCurrency;
+end;
+
+function TItensPedido.TextoAlterar: String;
+begin
+  Result := ' UPDATE tbl_pedido_itens SET ' +
+    ' numero_pedido = :NR_PED,    ' +
+    ' codigo_produto = :COD_PROD, ' +
+    ' quantidade = :QTD,          ' +
+    ' valor_unitario = :V_UNIT,   ' +
+    ' valor_total = :V_TOTAL      ' +
+    ' WHERE codigo = :COD         ';
+end;
+
+function TItensPedido.TextoCarregaPorCodigo: String;
+begin
+  Result := 'SELECT * FROM tbl_pedido_itens WHERE codigo = :COD';
+end;
+
+function TItensPedido.TextoCarregaPorNrPed: String;
+begin
+  Result := 'SELECT * FROM tbl_pedido_itens WHERE numero_pedido = :NR_PED';
+end;
+
+function TItensPedido.TextoExcluir: String;
+begin
+  Result := ' DELETE FROM tbl_pedido_itens WHERE codigo = :COD ';
+end;
+
+function TItensPedido.TextoExcluirPorNrPed: String;
+begin
+  Result := ' DELETE FROM tbl_pedido_itens WHERE numero_pedido = :NR_PED ';
+end;
+
+function TItensPedido.TextoInserir: String;
+begin
+  Result := ' INSERT INTO tbl_pedido_itens ' +
+    ' (numero_pedido, codigo_produto, quantidade, valor_unitario, valor_total) ' +
+    ' VALUES (:NR_PED, :COD_PROD, :QTD, :V_UNIT, :V_TOTAL)';
 end;
 
 end.

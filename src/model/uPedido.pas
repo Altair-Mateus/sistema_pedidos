@@ -14,6 +14,13 @@ type
     FValorTotal: Currency;
 
     procedure PopularCampos(pFieldList: TFieldList);
+
+    function TextoInserir: String;
+    function TextoExcluir: String;
+    function TextoAlterar: String;
+    function TextoCarregaPorNrPed: String;
+    function TextoBuscarUltimaId: String;
+
   public
     property NumeroPedido: Integer read FNumeroPedido write FNumeroPedido;
     property DataEmissao: TDateTime read FDataEmissao write FDataEmissao;
@@ -48,11 +55,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' UPDATE tbl_pedidos SET        ');
-    lQuery.SQL.Add(' data_emissao = :DATA,         ');
-    lQuery.SQL.Add(' codigo_cliente = :COD_CLI,    ');
-    lQuery.SQL.Add(' valor_total = :VALOR          ');
-    lQuery.SQL.Add(' WHERE numero_pedido = :NR_PED ');
+    lQuery.SQL.Text := TextoAlterar;
 
     lQuery.ParamByName('DATA').AsDateTime := FDataEmissao;
     lQuery.ParamByName('COD_CLI').AsInteger := FCodigoCliente;
@@ -79,7 +82,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add('SELECT * FROM tbl_pedidos WHERE numero_pedido = :NR');
+    lQuery.SQL.Text := TextoCarregaPorNrPed;
     lQuery.ParamByName('NR').AsInteger := FNumeroPedido;
 
     if not(lQuery.IsEmpty) then
@@ -131,8 +134,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' DELETE FROM tbl_pedidos ');
-    lQuery.SQL.Add(' WHERE numero_pedido = :NR_PED ');
+    lQuery.SQL.Text := TextoExcluir;
     lQuery.ParamByName('NR_PED').AsInteger := FNumeroPedido;
 
     lQuery.ExecSQL;
@@ -155,8 +157,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add(' INSERT INTO tbl_pedidos (data_emissao, codigo_cliente, valor_total) ');
-    lQuery.SQL.Add(' VALUES (:DATA, :COD_CLI, :VALOR) ');
+    lQuery.SQL.Text := TextoInserir;
 
     lQuery.ParamByName('DATA').AsDateTime := FDataEmissao;
     lQuery.ParamByName('COD_CLI').AsInteger := FCodigoCliente;
@@ -170,7 +171,7 @@ begin
     begin
 
       lQuery.SQL.Clear;
-      lQuery.Open('SELECT LAST_INSERT_ID() AS ID');
+      lQuery.Open(TextoBuscarUltimaId);
       FNumeroPedido := lQuery.FieldByName('ID').AsInteger;
 
     end;
@@ -194,6 +195,36 @@ begin
   FDataEmissao := pFieldList.FieldByName('data_emissao').AsDateTime;
   FCodigoCliente := pFieldList.FieldByName('codigo_cliente').AsInteger;
   FValorTotal := pFieldList.FieldByName('valor_total').AsCurrency;
+end;
+
+function TPedido.TextoAlterar: String;
+begin
+  Result := ' UPDATE tbl_pedidos SET ' +
+    ' data_emissao = :DATA,          ' +
+    ' codigo_cliente = :COD_CLI,     ' +
+    ' valor_total = :VALOR           ' +
+    ' WHERE numero_pedido = :NR_PED  ';
+end;
+
+function TPedido.TextoBuscarUltimaId: String;
+begin
+  Result := 'SELECT LAST_INSERT_ID() AS ID';
+end;
+
+function TPedido.TextoCarregaPorNrPed: String;
+begin
+  Result := 'SELECT * FROM tbl_pedidos WHERE numero_pedido = :NR';
+end;
+
+function TPedido.TextoExcluir: String;
+begin
+  Result := ' DELETE FROM tbl_pedidos WHERE numero_pedido = :NR_PED ';
+end;
+
+function TPedido.TextoInserir: String;
+begin
+  Result := ' INSERT INTO tbl_pedidos (data_emissao, codigo_cliente, valor_total) ' +
+    ' VALUES (:DATA, :COD_CLI, :VALOR) ';
 end;
 
 end.

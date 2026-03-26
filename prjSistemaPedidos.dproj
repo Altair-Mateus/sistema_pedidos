@@ -147,6 +147,8 @@
         <DCCReference Include="src\model\uProduto.pas"/>
         <DCCReference Include="src\model\uPedido.pas"/>
         <DCCReference Include="src\model\uItensPedido.pas"/>
+        <DCCReference Include="src\controller\uControllerPedido.pas"/>
+        <DCCReference Include="src\common\types\uEnums.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

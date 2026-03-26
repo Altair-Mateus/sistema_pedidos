@@ -13,6 +13,9 @@ type
     FPrecoVenda: Currency;
 
     procedure PopularCampos(pFieldList: TFieldList);
+
+    function TextoCarregaPorCodigo: String;
+
   public
     property Codigo: Integer read FCodigo write FCodigo;
     property Descricao: string read FDescricao write FDescricao;
@@ -23,7 +26,6 @@ type
     procedure Limpar;
     function CarregaPorCodigo: Boolean;
 
-    class function CheckPorCodigo(const pCodigo: Integer): Boolean;
   end;
 
 implementation
@@ -43,7 +45,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Add('SELECT * FROM tbl_produtos WHERE codigo = :COD');
+    lQuery.SQL.Text := TextoCarregaPorCodigo;
     lQuery.ParamByName('COD').AsInteger := FCodigo;
 
     if not(lQuery.IsEmpty) then
@@ -51,27 +53,6 @@ begin
       PopularCampos(lQuery.FieldList);
       Result := True;
     end;
-
-  finally
-    lQuery.Free;
-  end;
-
-end;
-
-class function TProduto.CheckPorCodigo(const pCodigo: Integer): Boolean;
-var
-  lQuery: TSpQuery;
-begin
-
-  Result := False;
-
-  lQuery := TSpQuery.Create(nil);
-  try
-
-    lQuery.SQL.Add('SELECT codigo FROM tbl_produtos WHERE codigo = :COD');
-    lQuery.ParamByName('COD').AsInteger := pCodigo;
-
-    Result := (not lQuery.IsEmpty);
 
   finally
     lQuery.Free;
@@ -96,6 +77,11 @@ begin
   FCodigo := pFieldList.FieldByName('codigo').AsInteger;
   FDescricao := pFieldList.FieldByName('descricao').AsString;
   FPrecoVenda := pFieldList.FieldByName('preco_venda').AsCurrency;
+end;
+
+function TProduto.TextoCarregaPorCodigo: String;
+begin
+  Result := 'SELECT * FROM tbl_produtos WHERE codigo = :COD';
 end;
 
 end.
