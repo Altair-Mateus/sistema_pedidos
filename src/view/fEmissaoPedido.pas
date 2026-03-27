@@ -23,7 +23,9 @@ uses
   Vcl.ImgList,
   System.Math,
   uControllerPedido,
-  uEnums;
+  uEnums,
+  fConsultaProduto,
+  fConsultaCliente;
 
 type
   TModoItem = (miInserindo, miEditando);
@@ -142,6 +144,8 @@ type
     procedure edtValorUnitKeyPress(Sender: TObject; var Key: Char);
     procedure edtQtdExit(Sender: TObject);
     procedure btnCancelarPedidoClick(Sender: TObject);
+    procedure btnBuscarClienteClick(Sender: TObject);
+    procedure btnBuscarProdutoClick(Sender: TObject);
   private
     FController: TControllerPedido;
     FTotalItens: Currency;
@@ -150,7 +154,6 @@ type
 
 {$REGION 'Funções de Inicialização'}
     procedure InicializarTela;
-    procedure InicializaGrid;
     procedure InicializaVariaveisControle;
     procedure CriarObjetos;
     procedure DestruirObjetos;
@@ -190,7 +193,6 @@ type
 {$REGION 'Funções para alimentar dados'}
     procedure RecalcularTotalPedido;
     procedure DefinirDadosProduto(const pCod: Integer; const pDesc: String; const pValorUnit: Currency);
-    function AbreTelaSolicitarNrPedido: Integer;
     procedure CarregarDadosPedido;
     procedure CarregarItens;
 {$ENDREGION}
@@ -199,7 +201,12 @@ type
     procedure InserirItemGrid(const pCod: Integer; const pDesc: String; const pQtd, pValorUnit: Currency);
     procedure CarregarItemParaEdicao;
     procedure ExcluirItemSelecionado;
+{$ENDREGION}
 
+{$REGION 'Funções para abrir telas auxiliares'}
+    function AbreTelaSolicitarNrPedido: Integer;
+    procedure AbreTelaCliente;
+    procedure AbreTelaProduto;
 {$ENDREGION}
   public
     { Public declarations }
@@ -219,6 +226,67 @@ uses
   uItensPedido;
 
 { TfrmEmissaoPedido }
+
+procedure TfrmEmissaoPedido.AbreTelaCliente;
+var
+  lFormulario: TfrmConsultaCliente;
+  lCodigo: String;
+begin
+
+  lCodigo := '';
+  lFormulario := TfrmConsultaCliente.Create(nil);
+  try
+    lFormulario.ShowModal;
+
+    if (lFormulario.ModalResult = mrOk) then
+    begin
+      lCodigo := lFormulario.RetornaCodigo;
+
+      if not(lCodigo.Trim.IsEmpty) then
+      begin
+        edtCliente.Text := lCodigo;
+        BuscarCliente;
+      end;
+    end;
+
+    edtCliente.SetFocus;
+  finally
+    lFormulario.Free;
+  end;
+end;
+
+procedure TfrmEmissaoPedido.AbreTelaProduto;
+var
+  lFormulario: TfrmConsultaProduto;
+  lCodigo: String;
+begin
+
+  lCodigo := '';
+
+  lFormulario := TfrmConsultaProduto.Create(nil);
+  try
+
+    lFormulario.ShowModal;
+
+    if (lFormulario.ModalResult = mrOk) then
+    begin
+      lCodigo := lFormulario.RetornaCodigo;
+
+      if not(lCodigo.Trim.IsEmpty) then
+      begin
+        edtProduto.Text := lCodigo;
+        BuscarProduto;
+        edtQtd.SetFocus;
+        Exit;
+      end;
+    end;
+
+    edtProduto.SetFocus;
+
+  finally
+    lFormulario.Free;
+  end;
+end;
 
 function TfrmEmissaoPedido.AbreTelaSolicitarNrPedido: Integer;
 var
@@ -259,6 +327,16 @@ end;
 procedure TfrmEmissaoPedido.btnInserirClick(Sender: TObject);
 begin
   IncluirProduto;
+end;
+
+procedure TfrmEmissaoPedido.btnBuscarClienteClick(Sender: TObject);
+begin
+  AbreTelaCliente;
+end;
+
+procedure TfrmEmissaoPedido.btnBuscarProdutoClick(Sender: TObject);
+begin
+  AbreTelaProduto;
 end;
 
 procedure TfrmEmissaoPedido.btnCancelarClick(Sender: TObject);
@@ -457,7 +535,6 @@ end;
 procedure TfrmEmissaoPedido.CriarObjetos;
 begin
   FController := TControllerPedido.Create;
-  InicializaGrid;
   InicializaVariaveisControle;
 end;
 
@@ -730,11 +807,6 @@ begin
     lblInfoProd.Caption, StrToCurrDef(Trim(edtQtd.Text), 0),
     StrToCurrDef(Trim(edtValorUnit.Text), 0)
     );
-
-end;
-
-procedure TfrmEmissaoPedido.InicializaGrid;
-begin
 
 end;
 

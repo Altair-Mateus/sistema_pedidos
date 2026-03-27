@@ -2,7 +2,7 @@ program prjSistemaPedidos;
 
 uses
   Vcl.Forms,
-  fEmissaoPedido in 'src\view\fEmissaoPedido.pas' {frmEmissaoPedido} ,
+  fEmissaoPedido in 'src\view\fEmissaoPedido.pas' {frmEmissaoPedido},
   System.SysUtils,
   Vcl.Dialogs,
   Winapi.Windows,
@@ -23,7 +23,9 @@ uses
   uPedido in 'src\model\uPedido.pas',
   uItensPedido in 'src\model\uItensPedido.pas',
   uControllerPedido in 'src\controller\uControllerPedido.pas',
-  uEnums in 'src\common\types\uEnums.pas';
+  uEnums in 'src\common\types\uEnums.pas',
+  fConsultaProduto in 'src\view\fConsultaProduto.pas' {frmConsultaProduto},
+  fConsultaCliente in 'src\view\fConsultaCliente.pas' {frmConsultaCliente};
 
 {$R *.res}
 

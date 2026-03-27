@@ -114,6 +114,7 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\bin</DCC_ExeOutput>
         <DCC_DcuOutput>.\lib</DCC_DcuOutput>
+        <Icon_MainIcon>prjSistemaPedidos_Icon.ico</Icon_MainIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -153,6 +154,14 @@
         <DCCReference Include="src\model\uItensPedido.pas"/>
         <DCCReference Include="src\controller\uControllerPedido.pas"/>
         <DCCReference Include="src\common\types\uEnums.pas"/>
+        <DCCReference Include="src\view\fConsultaProduto.pas">
+            <Form>frmConsultaProduto</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="src\view\fConsultaCliente.pas">
+            <Form>frmConsultaCliente</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
