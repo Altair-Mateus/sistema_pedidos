@@ -70,7 +70,7 @@ begin
     Values['Server'] := 'localhost';
     Database := 'sistema_pedidos';
     UserName := 'root';
-    Password := 'Study@2021!';
+    Password := 'root';
     Values['Port'] := '3306';
     Values['VendorLib'] := 'libmariadb.dll';
     Values['CharacterSet'] := 'utf8mb4';
