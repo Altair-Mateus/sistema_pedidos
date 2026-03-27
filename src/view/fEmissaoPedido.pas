@@ -97,9 +97,6 @@ type
     lblValorTotal: TLabel;
     lblValorPedido: TLabel;
     pnlBotoes: TPanel;
-    btnExcluit: TButton;
-    btnGravar: TButton;
-    btnCarregar: TButton;
     imgListBotoes: TImageList;
     cdsItensCodProd: TIntegerField;
     cdsItensDescProd: TStringField;
@@ -123,6 +120,10 @@ type
     pnlEdtDataPedido: TPanel;
     edtDataPedido: TEdit;
     btnCancelar: TButton;
+    btnGravar: TButton;
+    btnCarregar: TButton;
+    btnExcluit: TButton;
+    btnCancelarPedido: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
@@ -140,6 +141,7 @@ type
     procedure edtValorUnitExit(Sender: TObject);
     procedure edtValorUnitKeyPress(Sender: TObject; var Key: Char);
     procedure edtQtdExit(Sender: TObject);
+    procedure btnCancelarPedidoClick(Sender: TObject);
   private
     FController: TControllerPedido;
     FTotalItens: Currency;
@@ -164,7 +166,8 @@ type
     procedure CancelarEdicaoItem;
     procedure Carregar;
     procedure Excluir;
-    procedure HabilitarBotoes(const pVisualizar: Boolean);
+    procedure HabilitarBotoes;
+    procedure CancelarPedido;
 {$ENDREGION}
 
 {$REGION 'Funções para limpar dados da tela'}
@@ -187,12 +190,16 @@ type
 {$REGION 'Funções para alimentar dados'}
     procedure RecalcularTotalPedido;
     procedure DefinirDadosProduto(const pCod: Integer; const pDesc: String; const pValorUnit: Currency);
+    function AbreTelaSolicitarNrPedido: Integer;
+    procedure CarregarDadosPedido;
+    procedure CarregarItens;
 {$ENDREGION}
 
 {$REGION 'Funções para o Grid'}
     procedure InserirItemGrid(const pCod: Integer; const pDesc: String; const pQtd, pValorUnit: Currency);
     procedure CarregarItemParaEdicao;
     procedure ExcluirItemSelecionado;
+
 {$ENDREGION}
   public
     { Public declarations }
@@ -208,9 +215,34 @@ implementation
 
 uses
   uCliente,
-  uProduto;
+  uProduto,
+  uItensPedido;
 
 { TfrmEmissaoPedido }
+
+function TfrmEmissaoPedido.AbreTelaSolicitarNrPedido: Integer;
+var
+  lValorTexto: String;
+  lNrPedido: Integer;
+begin
+
+  Result := 0;
+  lNrPedido := 0;
+
+  if (InputQuery('Nº Pedido', 'Informe o número do pedido:', lValorTexto)) then
+  begin
+
+    if ((not TryStrToInt(lValorTexto, lNrPedido)) or (lNrPedido <= 0)) then
+    begin
+      Application.MessageBox('Número informado é inválido', 'Atenção!', MB_OK or MB_ICONWARNING);
+      Exit;
+    end;
+
+    Result := lNrPedido;
+
+  end;
+
+end;
 
 procedure TfrmEmissaoPedido.AtualizarEstadoProduto;
 begin
@@ -232,6 +264,11 @@ end;
 procedure TfrmEmissaoPedido.btnCancelarClick(Sender: TObject);
 begin
   CancelarEdicaoItem;
+end;
+
+procedure TfrmEmissaoPedido.btnCancelarPedidoClick(Sender: TObject);
+begin
+  CancelarPedido;
 end;
 
 procedure TfrmEmissaoPedido.btnCarregarClick(Sender: TObject);
@@ -320,18 +357,62 @@ begin
   SetModoInserir;
   LimparDadosProduto;
   AtualizarEstadoProduto;
+  grdItens.Enabled := True;
+  cdsItens.First;
   edtProduto.SetFocus;
 end;
 
 procedure TfrmEmissaoPedido.Carregar;
+var
+  lNrPedido: Integer;
 begin
 
+  lNrPedido := AbreTelaSolicitarNrPedido;
+
+  if (lNrPedido <= 0) then
+    Exit;
+
+  try
+
+    FOperacaoCadastro := ocAlterar;
+
+    if (FController.CarregarDados(lNrPedido)) then
+    begin
+      CarregarDadosPedido;
+      MostrarDadosPedido(True);
+    end
+    else
+    begin
+      Application.MessageBox('Não foi possível localizar o pedido.', 'Atenção!', MB_OK or MB_ICONEXCLAMATION);
+    end;
+
+    HabilitarBotoes;
+
+  except
+    on E: Exception do
+    begin
+      Application.MessageBox(PChar('Erro ao carregar Pedido: '#13 + E.Message), 'Erro!', MB_OK or MB_ICONERROR);
+    end;
+  end;
+
+end;
+
+procedure TfrmEmissaoPedido.CarregarDadosPedido;
+begin
+  edtNrPedido.Text := FController.Pedido.NumeroPedido.ToString;
+  edtDataPedido.Text := DateTimeToStr(FController.Pedido.DataEmissao);
+  edtCliente.Text := FController.Pedido.CodigoCliente.ToString;
+
+  CarregarItens;
+  BuscarCliente;
 end;
 
 procedure TfrmEmissaoPedido.CarregarItemParaEdicao;
 begin
   if not(CdsAlimentado) then
     Exit;
+
+  grdItens.Enabled := False;
 
   FModoItem := miEditando;
 
@@ -343,6 +424,28 @@ begin
 
   AtualizarEstadoProduto;
   edtQtd.SetFocus;
+
+end;
+
+procedure TfrmEmissaoPedido.CarregarItens;
+var
+  lItem: TItensPedido;
+begin
+  try
+    for lItem in FController.ListaItens do
+    begin
+
+      InserirItemGrid(
+        lItem.CodigoProduto,
+        lItem.DescProduto,
+        lItem.Quantidade,
+        lItem.ValorUnitario
+        );
+
+    end;
+  finally
+    FController.LimparLista;
+  end;
 
 end;
 
@@ -387,6 +490,7 @@ end;
 procedure TfrmEmissaoPedido.edtClienteExit(Sender: TObject);
 begin
   BuscarCliente;
+  HabilitarBotoes;
 end;
 
 procedure TfrmEmissaoPedido.edtProdutoExit(Sender: TObject);
@@ -434,7 +538,44 @@ begin
 end;
 
 procedure TfrmEmissaoPedido.Excluir;
+var
+  lNrPedido: Integer;
 begin
+
+  lNrPedido := AbreTelaSolicitarNrPedido;
+
+  if (lNrPedido <= 0) then
+    Exit;
+
+  try
+
+    if not(FController.ExistePedido(lNrPedido)) then
+    begin
+      Application.MessageBox('Pedido informado não existe ou já foi excluído', 'Atenção!', MB_OK or MB_ICONERROR);
+      Exit;
+    end;
+
+    if (Application.MessageBox(
+      PChar('Deseja realmente excluir o pedido nº ' + IntToStr(lNrPedido) + '?'),
+      'Confirmação',
+      MB_YESNO + MB_ICONQUESTION
+      ) = IDYES) then
+    begin
+
+      if (FController.Excluir(lNrPedido)) then
+      begin
+        Limpar;
+        LimparGrid;
+        Application.MessageBox('Pedido excluído com sucesso!', 'Sucesso!', MB_OK or MB_ICONINFORMATION);
+      end;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      Application.MessageBox(PChar('Erro ao excluir Pedido: '#13 + E.Message), 'Erro!', MB_OK or MB_ICONERROR);
+    end;
+  end;
 
 end;
 
@@ -443,11 +584,11 @@ begin
   if not(CdsAlimentado) then
     Exit;
 
-  if Application.MessageBox(
+  if (Application.MessageBox(
     'Deseja realmente excluir este item?',
     'Confirmação',
     MB_YESNO + MB_ICONQUESTION
-    ) = IDYES then
+    ) = IDYES) then
   begin
 
     cdsItens.Delete;
@@ -460,6 +601,14 @@ begin
     edtProduto.SetFocus;
   end;
 
+end;
+
+procedure TfrmEmissaoPedido.CancelarPedido;
+begin
+  FController.Limpar;
+  InicializaVariaveisControle;
+  LimparGrid;
+  Limpar;
 end;
 
 procedure TfrmEmissaoPedido.FormCreate(Sender: TObject);
@@ -503,8 +652,8 @@ begin
       Application.MessageBox('Pedido gravado com sucesso!', 'Sucesso!', MB_OK or MB_ICONINFORMATION);
       FController.Limpar;
       InicializaVariaveisControle;
-      Limpar;
       LimparGrid;
+      Limpar;
     end;
 
   except
@@ -522,8 +671,8 @@ begin
   case Key of
     VK_RETURN:
       begin
-        CarregarItemParaEdicao;
         Key := 0;
+        CarregarItemParaEdicao;
       end;
 
     VK_DELETE:
@@ -534,10 +683,14 @@ begin
   end;
 end;
 
-procedure TfrmEmissaoPedido.HabilitarBotoes(const pVisualizar: Boolean);
+procedure TfrmEmissaoPedido.HabilitarBotoes;
+var
+  lSemCliente: Boolean;
 begin
-  btnCarregar.Visible := pVisualizar;
-  btnExcluit.Visible := pVisualizar;
+  lSemCliente := (StrToIntDef(Trim(edtCliente.Text), 0) = 0);
+
+  btnCarregar.Visible := lSemCliente;
+  btnExcluit.Visible := lSemCliente;
 end;
 
 procedure TfrmEmissaoPedido.IncluirItensNaLista;
@@ -588,8 +741,7 @@ end;
 procedure TfrmEmissaoPedido.InicializarTela;
 begin
   Limpar;
-  HabilitarBotoes(False);
-  MostrarDadosPedido(False);
+  HabilitarBotoes;
   AtualizarEstadoProduto;
 end;
 
@@ -625,13 +777,18 @@ begin
     lSucesso := True;
 
   finally
-    if lSucesso then
+
+    if (FModoItem = miEditando) then
+      grdItens.Enabled := True;
+
+    if (lSucesso) then
     begin
       RecalcularTotalPedido;
       SetModoInserir;
       LimparDadosProduto;
       edtProduto.SetFocus;
     end;
+
   end;
 end;
 
@@ -645,12 +802,15 @@ begin
   LimparDadosCliente;
   LimparDadosProduto;
   RecalcularTotalPedido;
+  MostrarDadosPedido(False);
+  grdItens.Enabled := True;
 end;
 
 procedure TfrmEmissaoPedido.LimparDadosCliente;
 begin
   edtCliente.clear;
   LimparLabelsCliente;
+  HabilitarBotoes;
 end;
 
 procedure TfrmEmissaoPedido.LimparDadosProduto;

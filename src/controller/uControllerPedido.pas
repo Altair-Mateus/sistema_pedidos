@@ -17,6 +17,7 @@ type
 
     function GravarItens(const pNrPedido: Integer): Boolean;
     function CarregaListaItens(const pNrPedido: Integer): Boolean;
+
   public
     property Pedido: TPedido read FPedido;
     property OperacaoCadastro: TOperacaoCadastro read FOperacaoCadastro write FOperacaoCadastro;
@@ -28,7 +29,10 @@ type
     function Gravar: Boolean;
     function CarregarDados(const pNrPedido: Integer): Boolean;
     function Excluir(const pNrPedido: Integer): Boolean;
+    function ExistePedido(const pNrPedido: Integer): Boolean;
+
     procedure Limpar;
+    procedure LimparLista;
 
     procedure AdicionarDadosPedido(const pCodiCli: Integer; const pValorTotal: Double);
     procedure AdicionarItem(const pCod: Integer; const pQtd, pValorUnit, pValorTotal: Currency);
@@ -86,6 +90,11 @@ begin
 
 end;
 
+procedure TControllerPedido.LimparLista;
+begin
+  FListaItens.Clear;
+end;
+
 function TControllerPedido.CarregaListaItens(const pNrPedido: Integer): Boolean;
 var
   lItem: TItensPedido;
@@ -94,7 +103,7 @@ begin
 
   lItem := TItensPedido.Create;
   try
-    Result := lItem.AlimentaListaPorNrPed(FListaItens, pNrPedido);
+    Result := lItem.AlimentaListaPorNrPed(FListaItens, pNrPedido, True);
   finally
     lItem.Free;
   end;
@@ -146,6 +155,11 @@ begin
       raise Exception.CreateFmt('Erro ao excluir pedido: %s', [E.Message]);
     end;
   end;
+end;
+
+function TControllerPedido.ExistePedido(const pNrPedido: Integer): Boolean;
+begin
+  Result := TPedido.CheckPorNrPed(pNrPedido);
 end;
 
 function TControllerPedido.Gravar: Boolean;
@@ -214,7 +228,7 @@ end;
 procedure TControllerPedido.Limpar;
 begin
   FPedido.Limpar;
-  FListaItens.Clear;
+  LimparLista;
 end;
 
 end.

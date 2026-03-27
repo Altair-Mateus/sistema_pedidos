@@ -17,15 +17,16 @@ type
     FQuantidade: Currency;
     FValorUnitario: Currency;
     FValorTotal: Currency;
+    FDescProduto: String;
 
-    procedure PopularCampos(pFieldList: TFieldList);
+    procedure PopularCampos(pFieldList: TFieldList; const pAlimentarDescProduto: Boolean = False);
 
     function TextoInserir: String;
     function TextoExcluir: String;
     function TextoExcluirPorNrPed: String;
     function TextoAlterar: String;
     function TextoCarregaPorCodigo: String;
-    function TextoCarregaPorNrPed: String;
+    function TextoCarregaPorNrPed(const pCarregarDescProduto: Boolean = False): String;
 
   public
     property Codigo: Integer read FCodigo write FCodigo;
@@ -34,6 +35,7 @@ type
     property Quantidade: Currency read FQuantidade write FQuantidade;
     property ValorUnitario: Currency read FValorUnitario write FValorUnitario;
     property ValorTotal: Currency read FValorTotal write FValorTotal;
+    property DescProduto: String read FDescProduto;
 
     constructor Create;
 
@@ -44,7 +46,8 @@ type
     function Excluir: Boolean;
 
     function InserirEmLote(const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
-    function AlimentaListaPorNrPed(const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+    function AlimentaListaPorNrPed(const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer;
+      const pBuscarDescProd: Boolean): Boolean;
     function ExcluirTudoPorNrPed(const pNrPedido: Integer): Boolean;
 
   end;
@@ -58,7 +61,7 @@ uses
   System.SysUtils;
 
 function TItensPedido.AlimentaListaPorNrPed(
-  const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer): Boolean;
+  const pLista: TObjectList<TItensPedido>; const pNrPedido: Integer; const pBuscarDescProd: Boolean): Boolean;
 var
   lQuery: TSpQuery;
   lItem: TItensPedido;
@@ -71,7 +74,7 @@ begin
   lQuery := TSpQuery.Create(nil);
   try
 
-    lQuery.SQL.Text := TextoCarregaPorNrPed;
+    lQuery.SQL.Text := TextoCarregaPorNrPed(pBuscarDescProd);
     lQuery.ParamByName('NR_PED').AsInteger := pNrPedido;
 
     lQuery.Open;
@@ -81,7 +84,7 @@ begin
 
       lItem := TItensPedido.Create;
       try
-        lItem.PopularCampos(lQuery.FieldList);
+        lItem.PopularCampos(lQuery.FieldList, pBuscarDescProd);
         pLista.Add(lItem);
       except
         on E: Exception do
@@ -284,7 +287,7 @@ begin
   FValorTotal := 0;
 end;
 
-procedure TItensPedido.PopularCampos(pFieldList: TFieldList);
+procedure TItensPedido.PopularCampos(pFieldList: TFieldList; const pAlimentarDescProduto: Boolean);
 begin
   FCodigo := pFieldList.FieldByName('codigo').AsInteger;
   FNumeroPedido := pFieldList.FieldByName('numero_pedido').AsInteger;
@@ -292,6 +295,9 @@ begin
   FQuantidade := pFieldList.FieldByName('quantidade').AsCurrency;
   FValorUnitario := pFieldList.FieldByName('valor_unitario').AsCurrency;
   FValorTotal := pFieldList.FieldByName('valor_total').AsCurrency;
+
+  if (pAlimentarDescProduto) then
+    FDescProduto := pFieldList.FieldByName('descricao').AsString;
 end;
 
 function TItensPedido.TextoAlterar: String;
@@ -310,9 +316,22 @@ begin
   Result := 'SELECT * FROM tbl_pedido_itens WHERE codigo = :COD';
 end;
 
-function TItensPedido.TextoCarregaPorNrPed: String;
+function TItensPedido.TextoCarregaPorNrPed(const pCarregarDescProduto: Boolean): String;
 begin
-  Result := 'SELECT * FROM tbl_pedido_itens WHERE numero_pedido = :NR_PED';
+
+  if (pCarregarDescProduto) then
+  begin
+    Result := 'SELECT ip.*, p.descricao ' +
+      'FROM tbl_pedido_itens AS ip ' +
+      'INNER JOIN tbl_produtos AS p ON ip.codigo_produto = p.codigo ' +
+      'WHERE numero_pedido = :NR_PED';
+  end
+  else
+  begin
+    Result := 'SELECT * ' +
+      'FROM tbl_pedido_itens ' +
+      'WHERE numero_pedido = :NR_PED';
+  end;
 end;
 
 function TItensPedido.TextoExcluir: String;

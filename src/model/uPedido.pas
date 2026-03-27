@@ -115,6 +115,7 @@ begin
     lQuery.SQL.Add('SELECT numero_pedido FROM tbl_pedidos WHERE numero_pedido = :NR');
     lQuery.ParamByName('NR').AsInteger := pNrPed;
 
+    lQuery.Open;
     Result := (not lQuery.IsEmpty);
 
   finally
